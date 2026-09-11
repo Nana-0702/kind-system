@@ -1,0 +1,28 @@
+{% extends "attendance/base.html" %}
+{% load static %}
+ 
+{% block title %}顔認証{% endblock %}
+ 
+{% block content %}
+<div class="card center">
+    <h2>顔認証</h2>
+    <p>枠の中央に顔を合わせてください。</p>
+ 
+    <video id="video" width="640" height="480" autoplay playsinline></video>
+    <canvas id="canvas" width="640" height="480" hidden></canvas>
+ 
+    <div id="status" class="status">カメラを準備しています...</div>
+ 
+    <div class="button-row">
+        <button id="captureButton" class="btn primary" disabled>
+            認証する
+        </button>
+        <a class="btn" href="{% url 'attendance:top' %}">戻る</a>
+    </div>
+</div>
+ 
+<script>
+    window.RECOGNIZE_URL = "{% url 'attendance:recognize' %}";
+</script>
+<script src="{% static 'attendance/camera.js' %}"></script>
+{% endblock %}

@@ -1,0 +1,23 @@
+{% extends "attendance/base.html" %}
+ 
+{% block title %}認証成功{% endblock %}
+ 
+{% block content %}
+<div class="card center success-card">
+    <div class="checkmark">✓</div>
+    <h2>顔認証成功</h2>
+ 
+    <p class="student-name">{{ record.student.name }}</p>
+    <p>園児番号：{{ record.student.student_number }}</p>
+ 
+    <div class="big-status">
+        {{ record.get_attendance_type_display }}しました
+    </div>
+ 
+    <p class="time-text">
+        {{ record.timestamp|date:"Y/m/d H:i:s" }}
+    </p>
+ 
+    <a class="btn primary" href="{% url 'attendance:top' %}">トップへ戻る</a>
+</div>
+{% endblock %}

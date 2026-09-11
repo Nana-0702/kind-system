@@ -1,0 +1,17 @@
+{% extends "attendance/base.html" %}
+ 
+{% block title %}園児登録{% endblock %}
+ 
+{% block content %}
+<div class="card">
+    <h2>園児登録</h2>
+    <p>正面を向いた、明るくはっきりした顔写真を使用してください。</p>
+ 
+    <form method="post" enctype="multipart/form-data">
+        {% csrf_token %}
+        {{ form.as_p }}
+        <button class="btn primary" type="submit">登録する</button>
+        <a class="btn" href="{% url 'attendance:top' %}">戻る</a>
+    </form>
+</div>
+{% endblock %}

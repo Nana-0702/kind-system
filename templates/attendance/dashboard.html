@@ -1,0 +1,49 @@
+{% extends "attendance/base.html" %}
+ 
+{% block title %}本日の状況{% endblock %}
+ 
+{% block content %}
+<div class="card">
+    <h2>本日の登降園状況</h2>
+    <p>{{ today|date:"Y年m月d日" }}</p>
+ 
+    <table class="status-table">
+        <thead>
+            <tr>
+                <th>園児番号</th>
+                <th>園児名</th>
+                <th>登園</th>
+                <th>降園</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for row in rows %}
+            <tr>
+                <td>{{ row.student.student_number }}</td>
+                <td>{{ row.student.name }}</td>
+                <td>
+                    {% if row.in_record %}
+                        {{ row.in_record.timestamp|date:"H:i:s" }}
+                    {% else %}
+                        未登園
+                    {% endif %}
+                </td>
+                <td>
+                    {% if row.out_record %}
+                        {{ row.out_record.timestamp|date:"H:i:s" }}
+                    {% else %}
+                        未降園
+                    {% endif %}
+                </td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="4">園児が登録されていません。</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+ 
+    <a class="btn" href="{% url 'attendance:top' %}">戻る</a>
+</div>
+{% endblock %}

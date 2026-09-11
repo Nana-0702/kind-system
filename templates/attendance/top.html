@@ -1,0 +1,19 @@
+{% extends "attendance/base.html" %}
+ 
+{% block title %}トップ{% endblock %}
+ 
+{% block content %}
+<div class="card center">
+    <h2>登園・降園</h2>
+    <p>カメラで顔を認証してください。</p>
+ 
+    <a class="btn primary" href="{% url 'attendance:camera' %}">
+        顔認証を開始
+    </a>
+ 
+    <div class="button-row">
+        <a class="btn" href="{% url 'attendance:register' %}">園児登録</a>
+        <a class="btn" href="{% url 'attendance:dashboard' %}">本日の状況</a>
+    </div>
+</div>
+{% endblock %}
