@@ -14,8 +14,6 @@ from django.views.decorators.http import require_POST
 from .forms import StudentForm
 from .models import Attendance, Student
 from django.conf import settings
-from .face_utils import prepare_face
-from .face_model import predict_face
 from django.contrib.admin.views.decorators import staff_member_required
 from django.shortcuts import render, get_object_or_404, redirect
 from django.views.decorators.http import require_POST
@@ -23,6 +21,10 @@ from .models import Student
 from django.contrib.admin.views.decorators import staff_member_required
 
 import os
+
+from .sface_utils import extract_feature
+from .sface_model import predict_feature
+
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 xml_path = os.path.join(cv2.data.haarcascades, 'haarcascade_frontalface_default.xml')
@@ -170,28 +172,27 @@ def recognize_face(request):
             return JsonResponse({"ok": False, "message": "画像を読み込めません。"}, status=400)
 
         try:
-            camera_face = prepare_face(image)
-        except ValueError:
+            feature = extract_feature(image)
+            active_ids = Student.objects.filter(
+                is_active=True
+            ).values_list("pk", flat=True)
+            label, score, accepted = predict_feature(
+                feature, active_ids
+            )
+        except FileNotFoundError as exc:
             return JsonResponse({
-                "ok": False,
-                "message": "一人の顔がはっきり写るようにしてください。",
+                "ok": False, "message": str(exc),
             })
-
-        try:
-            label, distance = predict_face(camera_face)
-        except FileNotFoundError:
+        except ValueError as exc:
             return JsonResponse({
-                "ok": False,
-                "message": "顔認識モデルを先に学習してください。",
+                "ok": False, "message": str(exc),
             })
-
-        # 距離（distance）がしきい値を超えている場合は認証失敗
-        threshold = settings.FACE_DISTANCE_THRESHOLD
-        if distance > threshold:
+ 
+        if not accepted:
             return JsonResponse({
                 "ok": False,
                 "message": "登録済みの顔と一致しませんでした。",
-                "distance": round(float(distance), 2),
+                "similarity": round(score, 4),
             })
 
         # 推論された label (通常は student.pk) から有効な生徒を取得
@@ -231,7 +232,7 @@ def recognize_face(request):
             "student_number": student.student_number,
             "type": record.get_attendance_type_display(),
             "time": timezone.localtime(record.timestamp).strftime("%H:%M:%S"),
-            "distance": round(float(distance), 2),
+            "similarity": round(score, 4),
             "redirect_url": f"/success/{record.id}/",
         })
 

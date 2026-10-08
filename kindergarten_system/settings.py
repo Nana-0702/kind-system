@@ -133,3 +133,14 @@ MAILERS = {
 }
 
 FACE_DISTANCE_THRESHOLD = 65.0
+
+FACE_YUNET_MODEL = (
+    BASE_DIR / "face_models" / "face_detection_yunet_2023mar.onnx"
+)
+FACE_SFACE_MODEL = (
+    BASE_DIR / "face_models" / "face_recognition_sface_2021dec.onnx"
+)
+FACE_GALLERY_PATH = BASE_DIR / "face_gallery.npz"
+FACE_COSINE_THRESHOLD = 0.363
+FACE_COSINE_MARGIN = 0.05
+
