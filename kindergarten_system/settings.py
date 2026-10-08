@@ -131,3 +131,5 @@ MAILERS = {
         "BACKEND": "django.core.mail.backends.console.EmailBackend",
     },
 }
+
+FACE_DISTANCE_THRESHOLD = 65.0
