@@ -176,9 +176,10 @@ def recognize_face(request):
             active_ids = Student.objects.filter(
                 is_active=True
             ).values_list("pk", flat=True)
-            label, score, accepted = predict_feature(
+            label, score, accepted, diagnostics = predict_feature(
                 feature, active_ids
             )
+            print(diagnostics)
         except FileNotFoundError as exc:
             return JsonResponse({
                 "ok": False, "message": str(exc),
