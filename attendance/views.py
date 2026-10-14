@@ -59,7 +59,23 @@ def register_student(request):
 
 
 def camera(request):
-    return render(request, "attendance/camera.html")
+    mode = request.GET.get("mode", "test")
+    titles = {
+        "in": "登園",
+        "out": "降園",
+        "test": "顔認証テスト",
+    }
+    if mode not in titles:
+        return JsonResponse(
+            {"ok": False, "message": "操作の種類が正しくありません。"},
+            status=400,
+        )
+    return render(
+        request,
+        "attendance/camera.html",
+        {"mode": mode, "mode_title": titles[mode]},
+    )
+
 
 
 def _read_student_face(student):
@@ -162,6 +178,16 @@ def _next_attendance_type(student):
 def recognize_face(request):
     try:
         body = json.loads(request.body)
+        mode = body.get("mode")
+        if mode not in {"in", "out", "test"}:
+            return JsonResponse(
+                {
+                    "ok": False,
+                    "message": "操作の種類を選んでください。",
+                },
+                status=400,
+            )
+
         data_url = body.get("image")
 
         if not data_url:
@@ -205,6 +231,15 @@ def recognize_face(request):
             })
 
         # 数秒以内の連打による二重登録を防ぐ
+        if mode == "test":
+            return JsonResponse({
+                "ok": True,
+                "mode": "test",
+                "student": student.name,
+                "student_number": student.student_number,
+                "message": "認証成功。出欠は記録していません。",
+            })
+
         recent = Attendance.objects.filter(
             student=student,
             timestamp__gte=timezone.now() - timedelta(seconds=10),
@@ -215,16 +250,39 @@ def recognize_face(request):
                 "message": "連続認証です。少し待ってからもう一度お試しください。"
             })
 
-        attendance_type = _next_attendance_type(student)
-        if attendance_type is None:
+        today = timezone.localdate()
+        records = Attendance.objects.filter(
+            student=student,
+            timestamp__date=today,
+        )
+        has_in = records.filter(
+            attendance_type="in"
+        ).exists()
+        has_out = records.filter(
+            attendance_type="out"
+        ).exists()
+
+        if mode == "in" and (has_in or has_out):
             return JsonResponse({
                 "ok": False,
-                "message": f"{student.name} さんは本日の登園・降園がすでに完了しています。"
+                "message": "本日の登園はすでに記録されています。",
             })
+
+        if mode == "out":
+            if not has_in:
+                return JsonResponse({
+                    "ok": False,
+                    "message": "先に登園を記録してください。",
+                })
+            if has_out:
+                return JsonResponse({
+                    "ok": False,
+                    "message": "本日の降園はすでに記録されています。",
+                })
 
         record = Attendance.objects.create(
             student=student,
-            attendance_type=attendance_type,
+            attendance_type=mode,
         )
 
         return JsonResponse({
@@ -267,6 +325,7 @@ def dashboard(request):
             "in_record": in_record,
             "out_record": out_record,
         })
+
 
     return render(
         request,

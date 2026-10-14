@@ -57,22 +57,31 @@ captureButton.addEventListener("click", async () => {
                 "Content-Type": "application/json",
                 "X-CSRFToken": getCookie("csrftoken")
             },
-            body: JSON.stringify({ image: imageData })
+            body: JSON.stringify({
+                image: imageData,
+                mode: window.ATTENDANCE_MODE
+            })
         });
- 
         const data = await response.json();
  
         if (data.ok) {
-            statusBox.textContent =
-                `${data.student} さん：${data.type} ${data.time}`;
- 
-            setTimeout(() => {
-                window.location.href = data.redirect_url;
-            }, 600);
+            if (data.mode === "test") {
+                statusBox.textContent =
+                    `${data.student} さん：認証成功。` +
+                    `出欠は記録していません。`;
+            captureButton.disabled = false;
+            } else {
+                statusBox.textContent =
+                    `${data.student} さん：${data.type} ${data.time}`;
+                setTimeout(() => {
+                    window.location.href = data.redirect_url;
+                }, 600);
+            }
         } else {
             statusBox.textContent = data.message;
             captureButton.disabled = false;
         }
+
         } catch (error) {
         console.error(error);
         statusBox.textContent = "通信エラーが発生しました。";

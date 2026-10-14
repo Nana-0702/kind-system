@@ -5,7 +5,7 @@
  
 {% block content %}
 <div class="card center">
-    <h2>顔認証</h2>
+    <h2>{{ mode_title }}</h2>
     <p>枠の中央に顔を合わせてください。</p>
  
     <video id="video" width="640" height="480" autoplay playsinline></video>
@@ -21,8 +21,13 @@
     </div>
 </div>
  
+<form hidden>
+    {% csrf_token %}
+</form>
 <script>
     window.RECOGNIZE_URL = "{% url 'attendance:recognize' %}";
+    window.ATTENDANCE_MODE = "{{ mode|escapejs }}";
 </script>
+
 <script src="{% static 'attendance/camera.js' %}"></script>
 {% endblock %}

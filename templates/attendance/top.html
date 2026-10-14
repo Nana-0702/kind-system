@@ -7,9 +7,21 @@
     <h2>登園・降園</h2>
     <p>カメラで顔を認証してください。</p>
  
-    <a class="btn primary" href="{% url 'attendance:camera' %}">
-        顔認証を開始
+    <div class="button-row">
+    <a class="btn primary"
+       href="{% url 'attendance:camera' %}?mode=in">
+        登園
     </a>
+    <a class="btn primary"
+       href="{% url 'attendance:camera' %}?mode=out">
+        降園
+    </a>
+    <a class="btn"
+       href="{% url 'attendance:camera' %}?mode=test">
+        顔認証テスト
+    </a>
+</div>
+
  
     <div class="button-row">
         <a class="btn" href="{% url 'attendance:register' %}">園児登録</a>
