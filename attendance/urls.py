@@ -14,6 +14,7 @@ urlpatterns = [
         "student/<int:pk>/delete/",
         views.student_delete_view,
         name="student_delete",
-    ),
+   ),
+    path("mood/", views.daily_mood, name="daily_mood"),
 ]
 

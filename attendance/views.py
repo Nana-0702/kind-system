@@ -12,7 +12,7 @@ from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
 from django.views.decorators.http import require_POST
 from .forms import StudentForm
-from .models import Attendance, Student
+from .models import Attendance, Student,DailyMood
 from django.conf import settings
 from django.contrib.admin.views.decorators import staff_member_required
 from django.shortcuts import render, get_object_or_404, redirect
@@ -25,6 +25,7 @@ import os
 from .sface_utils import extract_feature
 from .sface_model import predict_feature
 
+from django.urls import reverse
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 xml_path = os.path.join(cv2.data.haarcascades, 'haarcascade_frontalface_default.xml')
@@ -285,6 +286,14 @@ def recognize_face(request):
             attendance_type=mode,
         )
 
+        redirect_url = reverse(
+            "attendance:success",
+            args=[record.id],
+        )
+        if record.attendance_type == "in":
+            request.session["pending_mood_record_id"] = record.id
+            redirect_url = reverse("attendance:daily_mood")
+
         return JsonResponse({
             "ok": True,
             "student": student.name,
@@ -292,7 +301,7 @@ def recognize_face(request):
             "type": record.get_attendance_type_display(),
             "time": timezone.localtime(record.timestamp).strftime("%H:%M:%S"),
             "similarity": round(score, 4),
-            "redirect_url": f"/success/{record.id}/",
+            "redirect_url": redirect_url,
         })
 
     except Exception as e:
@@ -309,6 +318,11 @@ def success(request, record_id):
 
 def dashboard(request):
     today = timezone.localdate()
+    moods_by_student = {
+        item.student_id: item
+        for item in DailyMood.objects.filter(date=today)
+    }
+
     students = Student.objects.filter(is_active=True).order_by("student_number")
     rows = []
 
@@ -324,6 +338,7 @@ def dashboard(request):
             "student": student,
             "in_record": in_record,
             "out_record": out_record,
+            "daily_mood": moods_by_student.get(student.pk),
         })
 
 
@@ -337,5 +352,80 @@ def student_delete_view(request, pk):
     student = get_object_or_404(Student, pk=pk)
     student.delete()
     return redirect("attendance:dashboard")
+
+def daily_mood(request):
+    record_id = request.session.get("pending_mood_record_id")
+    if not record_id:
+        return redirect("attendance:top")
+
+    record = Attendance.objects.select_related("student").filter(
+        pk=record_id,
+        attendance_type="in",
+        timestamp__date=timezone.localdate(),
+        student__is_active=True,
+    ).first()
+    if record is None:
+        request.session.pop("pending_mood_record_id", None)
+        return redirect("attendance:top")
+
+    error = None
+    if request.method == "POST":
+        mood = request.POST.get("mood")
+        allowed_moods = {
+            value for value, label in DailyMood.MOOD_CHOICES
+        }
+        if mood in allowed_moods:
+            DailyMood.objects.update_or_create(
+                student=record.student,
+                date=timezone.localdate(record.timestamp),
+                defaults={"mood": mood},
+            )
+            request.session.pop("pending_mood_record_id", None)
+            messages.success(request, "本日の気分を記録しました。")
+            return redirect("attendance:top")
+        error = "気分を選んでください。"
+
+    return render(
+        request,
+        "attendance/daily_mood.html",
+        {"student": record.student, "error": error},
+    )
+def daily_mood(request):
+    record_id = request.session.get("pending_mood_record_id")
+    if not record_id:
+        return redirect("attendance:top")
+
+    record = Attendance.objects.select_related("student").filter(
+        pk=record_id,
+        attendance_type="in",
+        timestamp__date=timezone.localdate(),
+        student__is_active=True,
+    ).first()
+    if record is None:
+        request.session.pop("pending_mood_record_id", None)
+        return redirect("attendance:top")
+
+    error = None
+    if request.method == "POST":
+        mood = request.POST.get("mood")
+        allowed_moods = {
+            value for value, label in DailyMood.MOOD_CHOICES
+        }
+        if mood in allowed_moods:
+            DailyMood.objects.update_or_create(
+                student=record.student,
+                date=timezone.localdate(record.timestamp),
+                defaults={"mood": mood},
+            )
+            request.session.pop("pending_mood_record_id", None)
+            messages.success(request, "本日の気分を記録しました。")
+            return redirect("attendance:top")
+        error = "気分を選んでください。"
+
+    return render(
+        request,
+        "attendance/daily_mood.html",
+        {"student": record.student, "error": error},
+    )
 
 # Create your views here.

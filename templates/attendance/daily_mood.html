@@ -1,0 +1,32 @@
+{% extends "attendance/base.html" %}
+{% block title %}本日の気分{% endblock %}
+{% block content %}
+<div class="card center">
+    <h2>本日の気分は？</h2>
+    <p>{{ student.name }} さん、今の気分を選んでね。</p>
+    {% if error %}
+        <p role="alert">{{ error }}</p>
+    {% endif %}
+    <form method="post">
+        {% csrf_token %}
+        <div class="button-row">
+            <button class="btn" type="submit"
+                    name="mood" value="happy">
+                <span style="font-size: 48px;">😊</span>
+                <br>元気
+            </button>
+            <button class="btn" type="submit"
+                    name="mood" value="normal">
+                <span style="font-size: 48px;">😐</span>
+                <br>ふつう
+            </button>
+            <button class="btn" type="submit"
+                    name="mood" value="sad">
+                <span style="font-size: 48px;">😢</span>
+                <br>かなしい
+            </button>
+        </div>
+    </form>
+    <p>表情を押すと記録されます。</p>
+</div>
+{% endblock %}

@@ -18,8 +18,38 @@ class Student(models.Model):
  
     def __str__(self):
         return f"{self.student_number} - {self.name}"
- 
- 
+
+class DailyMood(models.Model):
+    MOOD_CHOICES = [
+        ("happy", "元気"),
+        ("normal", "ふつう"),
+        ("sad", "かなしい"),
+    ]
+    student = models.ForeignKey(
+        Student,
+        on_delete=models.CASCADE,
+        related_name="daily_moods",
+    )
+    date = models.DateField("日付")
+    mood = models.CharField(
+        "本日の気分", max_length=10, choices=MOOD_CHOICES,
+    )
+    updated_at = models.DateTimeField("更新日時", auto_now=True)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=["student", "date"],
+                name="unique_student_daily_mood",
+            )
+        ]
+
+    def __str__(self):
+        return (
+            f"{self.student.name} {self.date} "
+            f"{self.get_mood_display()}"
+        )
+
 class Attendance(models.Model):
     TYPE_CHOICES = [
         ("in", "登園"),
@@ -58,7 +88,6 @@ class StudentFacePhoto(models.Model):
  
     def __str__(self):
         return f"{self.student.student_number} / {self.pk}"
-
 
 
 # Create your models here.
